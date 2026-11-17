@@ -1,0 +1,57 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: services/ingestion/Dockerfile
+    volumes:
+      - feature-data:/repo/data
+
+  feast:
+    build:
+      context: .
+      dockerfile: features/Dockerfile
+    depends_on:
+      - redis
+    volumes:
+      - feature-data:/repo/data
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: services/mlflow/Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+
+  training:
+    build:
+      context: .
+      dockerfile: services/training/Dockerfile
+    depends_on:
+      - mlflow
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    volumes:
+      - feature-data:/repo/data
+
+  serving:
+    build:
+      context: .
+      dockerfile: services/serving/Dockerfile
+    depends_on:
+      - mlflow
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+
+volumes:
+  redis-data:
+  feature-data:
+  mlflow-data:

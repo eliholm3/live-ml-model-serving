@@ -1,0 +1,6 @@
+feast==0.68.0
+redis
+pandas
+pyarrow
+scikit-learn
+mlflow>=2.17,<3
